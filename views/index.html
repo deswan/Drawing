@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="index.css">
+<link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.min.css">
+
+</head>
+<body>
+<div id="app">
+<form id="users" v-if="show.users">
+<ul>
+		<li v-for="user in usersPreList">
+			{{user.name}} 
+			<span v-if="user.gaming" class="badge">游戏中</span>
+			<span class="badge" v-if="user.prepare">准备</span>
+		</li>
+</ul>
+<input type="submit" value="准备" @click="prepare">
+</form>
+<div id="play" v-if="show.play">
+	<div>
+		<div id="inform">
+			<div id="topic">
+				<p>题目：{{topic1}}</p>
+				<p>提示：{{topic2}}</p>
+				<p>计时：{{topic3}}</p>
+			</div>
+			<div id="chat">
+				<div>
+				<ul>
+					<li v-for="item in speakList" :class="item.type">
+						<template v-if="item.type=='normal'">{{item.from}}:{{item.message}}</template>
+						<template v-if="item.type=='correct'">{{item.from}}回答正确，{{item.message}}</template>
+						<template v-if="item.type=='end'">本轮结束</template>
+						<template v-if="item.type=='new'">新一轮开始，由 {{item.name}} 画</template>
+					</li>
+				</ul>
+				</div>
+			</div>
+			<form id="enter" class="form-inline" role="form">
+		    <div class="form-group">
+		    <input type="text" class="form-control"  placeholder="答案" v-model="speak">
+		    </div>
+		    <button type="submit" class="btn btn-default" @click="answer">确定</button>
+		</form>
+		</div>
+		<div class="draw">
+			<canvas id="canvas"></canvas>
+			<div v-if="inTurn">
+			<div class="tools colors">
+				<div class="choose a" v-for="color in colors" @click="c_choose(color)">
+					<span class="glyphicon glyphicon-ok tick" v-if="color.tick"></span>
+				</div>
+			</div>
+			<div class=" tools linewidth">
+				<div class="choose b" v-for="lineWidth in lineWidths" :class="{active:lineWidth.tick}" @click="w_choose(lineWidth)"></div>
+			</div>
+			<div class="rubber choose c">
+				<img src="rubber.png">
+			</div>
+				</div>
+		</div>
+		<ul id="players">
+			<li v-for="player in playerlist" :class="{'correct':player.correct}" >
+				{{player.name}}
+				<p>分数:{{player.score}}</p>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="top:30%">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-body">
+        ...
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="vue.js"></script>
+
+<script type="text/javascript" src="jquery.cookie.js"></script>
+<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+	
+	
+	<script type="text/javascript">
+
+    
+    function htmldecode(s){  
+        var div = document.createElement('div');  
+        div.innerHTML = s;  
+        return div.innerText || div.textContent;  
+    }  
+    function htmlencode(s){  
+	    var div = document.createElement('div');  
+	    div.appendChild(document.createTextNode(s));  
+	    return div.innerHTML;  
+	}  
+	$('body').scroll(function(e){
+		e.preventDefault();
+	})
+	$('.choose').click(function(e){
+
+	})	
+
+
+		var canv;
+		var context;
+		var draw;
+		var vm = new Vue({
+		  el: '#app',
+		  data: {
+		  	show:{
+				users:true,
+				play:false
+			},
+			socket:"",
+			id:"",
+			usersPreList:{},
+			playerlist:[],
+			myId:0,
+			nickname:"",
+			topic1:"",
+			topic2:"",
+			topic3:"",
+			speakList:[],
+			speak:"",
+			  inTurn:false,
+			colors:[
+				{color:'black',tick:true},
+				{color:'red',tick:false},
+				{color:'orange',tick:false},
+				{color:'yellow',tick:false},
+				{color:'green',tick:false},
+				{color:'blue',tick:false},
+				{color:'purple',tick:false},
+			],
+			lineWidths:[
+				{width:'10',tick:false},
+				{width:'3',tick:true}
+			]
+		  },
+			mounted(){
+				console.log(this.colors[3]);
+				this.socket = io.connect("http://"+location.hostname+":3000");	//链接
+				this.nickname = $.cookie('name');	//初始化nickname
+				console.log(this.nickname);
+				this.socket.emit('join',this.nickname);
+				this.socket.on('join',function(users){
+					for(var i in users){
+						if(users[i].name===vm.nickname){
+							vm.id=i;break;	//设置自身ID
+						}
+					}
+					vm.drawList(users);
+				})
+				this.socket.on('prepare',function(id) {
+					vm.usersPreList[id].prepare=true;
+				})
+				this.socket.on('unprepare',function(id) {
+					vm.usersPreList[id].prepare=false;
+				})
+				this.socket.on('start',function(players){	//players:数组
+					vm.show.users = false;
+					vm.show.play = true;
+					vm.$nextTick(function () {
+						initCanvas();
+					})
+
+					for(var i=0;i<players.length;i++){
+						if(players[i].id===vm.id){
+							players[i].name+='(我)'
+							vm.id=i;
+							break;
+						}
+					}
+					vm.playerlist=players;
+
+					//调试输出
+					console.log('playerlist:');
+					for(var i=0;i<players.length;i++){
+						console.log(players[i].name)
+					}
+
+					vm.play();
+				})
+
+				//准备时离线
+				this.socket.on('disconnection',function(users) {
+					vm.drawList(users);
+				})
+			},
+		  methods:{
+		  	c_choose:function(o){
+		  		for(var i=0;i<this.colors.length;i++){
+		  			this.colors[i].tick=false
+		  		}
+		  		o.tick=true;
+		  		if(context){
+		  			context.strokeStyle = o.color;
+		  		}
+		  	},
+			  w_choose:function(o){
+				  for(var i=0;i<this.lineWidths.length;i++){
+					  this.lineWidths[i].tick=false
+				  }
+				  o.tick=true;
+				  if(context){
+					  context.lineWidth = o.width;
+				  }
+			  },
+		  	drawList:function(users){
+		  		this.usersPreList=users;
+		  	},
+		  	prepare:function(e){
+		  		e.preventDefault();
+				if(!this.usersPreList[this.id].prepare){
+					this.usersPreList[this.id].prepare=true;
+					this.socket.emit('prepare');
+				}
+				else{
+					this.usersPreList[this.id].prepare=false;
+					this.socket.emit('unprepare');
+				}
+		  	},
+		  	play:function(){
+		  		this.socket.on('gameover',function(status,name){
+		  			var countdown;
+		  			var text;
+		  			var $m = $('#myModal')
+		  			function flash(){
+		  				window.location = 'http://localhost:3000'
+		  			}
+		  			
+		  			if(status==0){
+		  				countdown=3;
+		  				text='用户：'+name+'已离线，'+countdown+'秒后将返回准备页面';
+		  			}else{
+		  				countdown=6;
+		  				text='游戏结束，'+countdown+'秒后将返回准备页面';
+		  			}
+	  				$m.find('.modal-body').text(text)
+	  				$m.modal()
+	  				function count(){
+		  				if(countdown==0){
+		  					flash();
+		  				}
+		  				countdown--;
+		  				if(status==0){
+			  				text='用户：'+name+'已离线，'+countdown+'秒后将返回准备页面';
+			  			}else{
+			  				text='游戏结束，'+countdown+'秒后将返回准备页面';
+			  			}
+		  				$m.find('.modal-body').text(text);
+		  				setTimeout(count,1000)
+		  			}
+	  				setTimeout(count,1000);
+		  		})
+		  		this.socket.on('countdown',function(countdown){
+		  			vm.topic3=countdown;
+		  		})
+		  		this.socket.on('cue',function(cue){
+		  			vm.topic2=cue;
+		  		})
+		  		this.socket.on('turnend',function(id,title,score){
+		  			vm.topic1 = title;
+  					vm.playerlist[id].score+=score;
+  					vm.speakList.push({type:'end'})
+		  		})
+		  		this.socket.on('turnin',function(id,topic){
+		  			vm.clear();	//每回合初始化
+					vm.inTurn=true;
+		  			vm.speakList.push({type:'new',name:vm.playerlist[id].name})
+					$('#players #'+$.escapeSelector(vm.id)).addClass('turnin');
+					vm.topic1 = topic.title;
+					$('#canvas').mousedown(function(e){
+						down(getPos(e).x,getPos(e).y);
+						vm.isDrawing = true;
+						vm.socket.emit('draw',{x:getPos(e).x,y:getPos(e).y,start:true})
+					})
+					$('#canvas').mousemove(function(e){
+						if(vm.isDrawing) {
+							move(getPos(e).x, getPos(e).y);
+						}
+						vm.socket.emit('move',{x:getPos(e).x,y:getPos(e).y,start:false})
+					})
+					$('#canvas').mouseup(function(e){
+						vm.isDrawing = false;
+						vm.socket.emit('up')
+					})
+				})
+				this.socket.on('turnout',function(id,name){
+					vm.clear();
+					vm.inTurn=false;
+					$('#canvas').off();	//移除全部时间监听
+					vm.speakList.push({type:'new',name:vm.playerlist[id].name})
+					$('#players #'+$.escapeSelector(id)).addClass('turnin');
+				})
+
+				this.socket.on('draw',function(data){
+					if(data.start){
+						down(pos.x,pos.y);
+					}else{
+						move(pos.x,pos.y);
+					}
+					vm.isDrawing = true;
+				})
+				this.socket.on('move',function(pos){
+					if(vm.isDrawing){
+					}
+				})
+				this.socket.on('up',function(){
+					vm.isDrawing = false;
+				})
+				this.socket.on('normal',function(name,text){
+		  			console.log('normal:'+name)
+		  			if(name==vm.nickname) name='我';
+		  			vm.speakList.push({from:name,message:text,type:'normal'})
+		  		})
+		  		this.socket.on('correct',function(id,hostid,name,score){
+  					console.log('score++')
+  					vm.playerlist[id].score+=score;
+  					vm.playerlist[hostid].score+=1;
+  					vm.playerlist[id].correct=true;
+  					console.log('correct:'+vm.playerlist[id].correct)
+		  			if(name==vm.nickname) name='我';
+		  			vm.speakList.push({from:name,message:' +'+score+'分',type:'correct'})
+		  		})
+
+		  	},
+			  clear(){
+				  vm.topic1="";
+				  vm.topic2="";
+				  vm.topic3="";
+				  $('#players li').removeClass('turnin');
+				  $('#players li').removeClass('correct');
+				  context.clearRect(0,0,canvas.width,canvas.height);
+			  },
+		  	answer:function(e){
+		  		e.preventDefault();
+		  		this.socket.emit('answer',this.speak);
+		  	}
+		  }
+		})
+
+		function initCanvas(){
+			canv = $('#canvas')[0];
+			console.log(canv)
+		    context = canv.getContext('2d');
+		    draw = false;
+		    context.strokeStyle = 'black';
+		}
+
+	
+		function down(x,y){
+			context.beginPath();
+			context.moveTo(x,y);
+			context.stroke();
+		}
+		function move(x,y){
+				context.lineTo(x,y);
+				context.stroke();
+		}
+		function up(){
+			draw=false
+		}
+
+		function getPos(e){
+			return {
+				x:(e.pageX-$(canvas).offset().left)*(300/750),
+				y:(e.pageY-$(canvas).offset().top)*(150/550)
+			}
+		}
+
+	</script>
+</body>
+</html>
+

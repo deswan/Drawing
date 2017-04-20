@@ -1,0 +1,10 @@
+{
+  "name": "picnguess",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "~4.2.0",
+    "socket.io": "^1.0.6",
+    "cookie-parser":"*",
+    "body-parser":"*"
+  }
+}

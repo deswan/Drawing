@@ -1,0 +1,208 @@
+*{
+	margin: 0px;
+	padding:0px;
+
+}
+body{
+	scroll:no;
+	overflow-y: hidden;  
+}
+.tick{
+	font-size:20px;
+	color:white;
+	margin-left: 20%;
+	margin-top: 20%;
+}
+.choose:hover{
+	cursor:pointer;
+}
+.choose.a:hover{
+	box-shadow: 0px 0px 1px 3px #95A5A6;
+}
+.choose.b:hover,.choose.b.active{
+	box-shadow: 0px 0px 1px 3px #E67E22;
+}
+.choose.c:hover{
+	box-shadow: 0px 0px 1px 3px #E67E22;
+}
+.draw{
+	float: left;
+	width: 750px;
+	/*height: 550px;*/
+	margin-left: 20px;
+	margin-top: 20px;
+}
+.draw .tools{
+	float: left;
+	background-color: #f5f5b4;
+	height: 70px;
+	margin: 0px;
+	padding-top: 15px;
+}
+.draw .colors div{
+	float: left;
+	margin-left: 25px;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+.draw .linewidth{
+	margin-left: 10px;
+}
+.draw .linewidth div{
+	float: left;
+	margin-left: 20px;
+	background-color: black;
+}
+.draw .linewidth div:nth-child(1){
+	width: 40px;
+	height: 40px;
+}
+.draw .linewidth div:nth-child(2){
+	margin-top: 5px;
+	width: 30px;
+	height: 30px;
+}
+.draw .linewidth div:nth-child(3){
+	margin-top: 10px;
+	width: 20px;
+	height: 20px;
+	margin-right: 20px;
+}
+.draw .rubber{
+	float: left;
+	margin-top: 5px;
+	margin-left: 20px;
+	width: 60px;
+	height: 60px;
+	background-color: #f5f5b4;
+	border-radius: 50%;
+}
+.draw .rubber img{
+	width: 70%;
+	height: 70%;
+	margin:15% 0px 0px 15%;
+}
+.draw .colors div:nth-child(2){
+	background-color: red;
+}
+.draw .colors div:nth-child(3){
+	background-color: orange;
+}
+.draw .colors div:nth-child(4){
+	background-color: yellow;
+}
+.draw .colors div:nth-child(5){
+	background-color: green;
+}
+.draw .colors div:nth-child(6){
+	background-color: blue;
+}
+.draw .colors div:nth-child(7){
+	background-color: purple;
+	margin-right: 25px;
+}
+.draw .colors div:nth-child(1){
+	background-color: black;
+}
+#canvas{
+	width: 750px;
+	height: 480px;
+	margin: 0px;
+	background-color: white;
+}
+#inform{
+	margin-top: 20px;
+	margin-left: 30px;
+	float: left;
+	width: 275px;
+	height: 550px;
+	border-radius: 10px;
+}
+#inform #topic{
+	font-size: 17px;
+	padding: 15px;
+	height: 85px;
+	line-height: 13px;
+	background-color: #1ABC9C;
+	border-radius: 10px 10px 0px 0px;
+	color: whitesmoke;
+}
+#inform #chat{
+	padding-top: 10px;
+	height: 420px;
+	background-color: white;
+	width: 275px;
+	margin: 0px;
+	border-radius: 0px 0px 10px 10px 	
+}
+#inform #chat div{
+	overflow:hidden;
+	position: relative;
+	width: 240px;
+	height: 310px;
+	margin: 0px auto;
+}
+#inform #chat ul{
+	padding: 0px;
+	margin: 0px;
+	line-height: 25px;
+	list-style: none;
+	position: absolute;
+	bottom: 0px;
+	left: 0px;
+} 
+#inform #chat ul li.correct{
+	color: red;
+}
+#inform #chat ul li.end,#inform #chat ul li.new{
+	color: blue;
+}
+#inform #enter{
+	margin-top: 10px;
+	height: 50px;
+}
+#inform #enter [type=text]{
+	width: 215px;
+}
+#players{
+	float: left;
+	margin-left: 20px;
+	margin-top: 20px;
+	padding: 0px;
+	height: 600px;
+	width: 240px;
+}
+#players li{
+	list-style: none;
+	margin: 0px;
+	margin-bottom:10px;
+	font-size: 20px;
+	color:black;
+	width: 100%;
+	padding: 10px;
+	line-height: 20px;
+	border-radius: 10px;
+	background-color: white
+}
+#players li.turnin{
+	color: white;
+	background-color:#E74C3C;
+}
+#players li.correct{
+	background-color: #F1C40F;
+	color: black
+}
+#players li p{
+	font-size: 13px;
+	margin: 0px;
+}
+#play{
+	background-color: #2C3E50;
+	height: 600px;
+}
+#play>div:nth-of-type(1){
+	height: 500px;
+	width: 100%;
+}
+
